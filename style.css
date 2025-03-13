@@ -1,5 +1,4 @@
-/* Custom Canvas-Based Gauge Styling for Multiple Sensors */
-
+/* 🔹 Root Variables (For Easy Theme Customization) */
 :root {
     --primary-color: #007bff;
     --secondary-color: #0056b3;
@@ -14,33 +13,61 @@
     --water-flow-sensor-color: #3498DB; /* Bright Blue */
 }
 
+/* 🔹 Fix Page Layout (Prevent Full-Height Stretching) */
 body {
     font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
     background-color: var(--background-color);
     color: var(--secondary-color);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
+/* 🔹 Project Title (Fixed Alignment) */
+.title-container {
+    width: 100%;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.title-container h1 {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--secondary-color);
+    text-transform: uppercase;
+    margin: 10px 0;
+}
+
+.title-container h2 {
+    font-size: 18px;
+    color: var(--primary-color);
+    font-weight: 500;
+    margin-bottom: 20px;
+}
+
+/* 🔹 Dashboard (Grid Layout for Gauges) */
 .dashboard {
     display: grid;
     grid-template-columns: repeat(3, 1fr); /* 3 Gauges per Row */
     gap: 20px;
     max-width: 800px;
+    padding-bottom: 40px; /* Prevent Gauges from touching the bottom */
 }
 
+/* 🔹 Gauge Box */
 .gauge-container {
-    width: 150px;
-    height: 130px;
+    width: 180px;
+    height: 140px;
     text-align: center;
     background: white;
-    padding: 10px;
+    padding: 12px;
     border-radius: 12px;
     box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* 🔹 Gauge Title */
 .gauge-title {
     font-size: 14px;
     font-weight: bold;
@@ -49,12 +76,14 @@ body {
     text-transform: uppercase;
 }
 
+/* 🔹 Gauge Value */
 .gauge-value {
     font-size: 18px;
     font-weight: bold;
     margin-top: 5px;
 }
 
+/* 🔹 Fix Canvas Size */
 canvas {
     width: 100% !important;
     height: auto !important;
