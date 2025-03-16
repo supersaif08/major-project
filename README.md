@@ -1,3 +1,3 @@
 # major-project
 this files include the website for the project
-<img src="https://www.shutterstock.com/image-photo/blond-hair-girl-taking-photo-260nw-2492842415.jpg">
+<img src="C:\Users\saifa\Pictures\Screenshots\Screenshot 2025-03-16 152724.png">
