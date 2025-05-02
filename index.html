@@ -4,16 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi-Sensor Gauge Dashboard</title>
+    <script>
+        // Redirect to login page if not logged in
+        if (localStorage.getItem("loggedIn") !== "true") {
+            window.location.href = "login.html";
+        }
+    </script>
+    
+    <script>
+        if (localStorage.getItem("loggedIn") !== "true") {
+            window.location.href = "login.html"; // Redirect if not logged in
+        }
+    </script>
+    
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        .logout-btn {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #0056b3;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+.logout-btn:hover {
+    background-color: #004299;
+}
+
+    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="project-title"><h1>Smart Industrial Monitoring and Control System</h1></div>
-        <div class="dashboard" id="dashboard">
-            <!-- Gauge boxes will be added dynamically here -->
-             
+        
+        <div class="container">
+            <button onclick="logout()" class="logout-btn">Logout</button>
+
+            <div class="project-title"><h1>Smart Industrial Monitoring and Control System</h1></div>
+            <div class="dashboard" id="dashboard">
+                <!-- Gauge boxes will be added dynamically here -->
+            </div>
         </div>
-    </div>
+    <script>
+        function logout() {
+    localStorage.removeItem("loggedIn");
+    window.location.href = "login.html";
+}
+
+    </script>
     <script src="script.js"></script>
 </body>
 </html>

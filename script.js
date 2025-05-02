@@ -6,7 +6,7 @@ let lastValues = {};  // Store last known values for each sensor
 const sheetID = "1QxvZ5AuXYkw9KidkqOVq25xiQRRigu9eT5FQEWPj_Kw";  // Replace with your actual Sheet ID
 const apiKey = "AIzaSyAzdZ7pmQcAX8rwS6WyO0qIVXZpj9ASxgU";  // Replace with your actual API Key
 const sheetName = "DataCollector";  // Your Sheet Name
-const range = `${sheetName}!A:H`;  // Fetch all rows dynamically
+const range = `${sheetName}!A:I`;  // Fetch all rows dynamically
 
 const sensors = [];
 
@@ -175,3 +175,38 @@ setInterval(fetchSensorData, 5000);
 
 // **🔹 Fetch Data on Page Load**
 fetchSensorData();
+
+
+
+const mqttClient = mqtt.connect("wss://broker.emqx.io:8084");
+const mqttScript = document.createElement("script");
+mqttScript.src = "https://unpkg.com/mqtt/dist/mqtt.min.js";
+mqttScript.onload = () => {
+    const mqttClient = mqtt.connect("wss://broker.emqx.io:8084");
+
+    mqttClient.on("connect", () => {
+        console.log("✅ Connected to EMQX via WebSocket");
+        mqttClient.subscribe("smart/factory", (err) => {
+            if (!err) {
+                console.log("📡 Subscribed to topic: smart/factory");
+            }
+        });
+    });
+
+    mqttClient.on("message", (topic, message) => {
+        try {
+            const payload = JSON.parse(message.toString());
+            const sensorId = payload.sensor.toLowerCase();
+            const newValue = parseFloat(payload.value);
+
+            if (charts[sensorId]) {
+                animateGauge(sensorId, newValue);
+            } else {
+                console.warn(`⚠️ Unknown sensor ID from MQTT: ${sensorId}`);
+            }
+        } catch (err) {
+            console.error("❌ MQTT message parse error:", err);
+        }
+    });
+};
+document.head.appendChild(mqttScript);

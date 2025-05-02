@@ -1,0 +1,36 @@
+<!-- login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login | Smart Monitoring System</title>
+    <link rel="stylesheet" href="style.css">
+    
+</head>
+<body>
+    <div class="login-container">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button onclick="handleLogin()">Login</button>
+        <div class="error" id="errorMsg">Invalid credentials</div>
+    </div>
+
+    <script>
+        function handleLogin() {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const errorMsg = document.getElementById("errorMsg");
+
+            // Simple hardcoded check (you can replace with server validation)
+            if (username === "Project" && password === "Project123") {
+                // Store session data if needed
+                localStorage.setItem("loggedIn", "true");
+                window.location.href = "index.html";  // Redirect to dashboard
+            } else {
+                errorMsg.style.display = "block";
+            }
+        }
+    </script>
+</body>
+</html>
