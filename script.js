@@ -18,12 +18,27 @@ function createGauge(sensor) {
         <div class="gauge-title">${sensor.label}</div>
         <canvas id="${sensor.id}" width="150" height="80"></canvas>
         <div class="gauge-value" id="${sensor.id}-value">0 ${sensor.unit}</div>
+        <div class="toggle-switch">
+            <label class="switch">
+                <input type="checkbox" id="${sensor.id}-toggle">
+                <span class="slider round"></span>
+            </label>
+        </div>
     `;
     dashboard.appendChild(container);
 
     const ctx = document.getElementById(sensor.id).getContext("2d");
-    charts[sensor.id] = { ctx, valueId: `${sensor.id}-value`, color: sensor.color, min: sensor.min, max: sensor.max, currentValue: 0, unit: sensor.unit };
+    charts[sensor.id] = {
+        ctx,
+        valueId: `${sensor.id}-value`,
+        color: sensor.color,
+        min: sensor.min,
+        max: sensor.max,
+        currentValue: 0,
+        unit: sensor.unit
+    };
 }
+
 
 // **🔹 Fetch Sensor Data from Google Sheets**
 async function fetchSensorData() {
