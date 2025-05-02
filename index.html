@@ -42,22 +42,31 @@
     </style>
 </head>
 <body>
-        
-        <div class="container">
-            <button onclick="logout()" class="logout-btn">Logout</button>
+    <button onclick="logout()" class="logout-btn">Logout</button>
 
-            <div class="project-title"><h1>Smart Industrial Monitoring and Control System</h1></div>
+    <div class="container">
+        <div class="project-title">
+            <h1>Smart Industrial Monitoring and Control System</h1>
+        </div>
+
+        <div class="main-layout">
             <div class="dashboard" id="dashboard">
                 <!-- Gauge boxes will be added dynamically here -->
             </div>
+
+            <div class="toggle-panel" id="toggle-panel">
+                <!-- Toggle switches will be added here dynamically -->
+            </div>
         </div>
+    </div>
+
     <script>
         function logout() {
-    localStorage.removeItem("loggedIn");
-    window.location.href = "login.html";
-}
-
+            localStorage.removeItem("loggedIn");
+            window.location.href = "login.html";
+        }
     </script>
     <script src="script.js"></script>
 </body>
+
 </html>

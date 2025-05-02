@@ -12,20 +12,28 @@ const sensors = [];
 
 // **🔹 Create Gauge Elements**
 function createGauge(sensor) {
+    // Gauge Box
     const container = document.createElement("div");
     container.classList.add("gauge-container");
     container.innerHTML = `
         <div class="gauge-title">${sensor.label}</div>
         <canvas id="${sensor.id}" width="150" height="80"></canvas>
         <div class="gauge-value" id="${sensor.id}-value">0 ${sensor.unit}</div>
-        <div class="toggle-switch">
-            <label class="switch">
-                <input type="checkbox" id="${sensor.id}-toggle">
-                <span class="slider round"></span>
-            </label>
-        </div>
     `;
     dashboard.appendChild(container);
+
+    // Toggle Switch (added separately to toggle panel)
+    const togglePanel = document.getElementById("toggle-panel");
+    const toggleContainer = document.createElement("div");
+    toggleContainer.classList.add("toggle-item");
+    toggleContainer.innerHTML = `
+        <label class="toggle-label">${sensor.label}</label>
+        <label class="switch">
+            <input type="checkbox" id="${sensor.id}-toggle" checked>
+            <span class="slider round"></span>
+        </label>
+    `;
+    togglePanel.appendChild(toggleContainer);
 
     const ctx = document.getElementById(sensor.id).getContext("2d");
     charts[sensor.id] = {
@@ -38,6 +46,7 @@ function createGauge(sensor) {
         unit: sensor.unit
     };
 }
+
 
 
 // **🔹 Fetch Sensor Data from Google Sheets**
