@@ -27,7 +27,8 @@ function createGauge(sensor) {
     const toggleContainer = document.createElement("div");
     toggleContainer.classList.add("toggle-item");
     toggleContainer.innerHTML = `
-        <label class="toggle-label">${sensor.label}</label>
+        <label class="toggle-label">Relay ${togglePanel.children.length + 1}</label>
+
         <label class="switch">
             <input type="checkbox" id="${sensor.id}-toggle" checked>
             <span class="slider round"></span>
@@ -202,35 +203,3 @@ fetchSensorData();
 
 
 
-const mqttClient = mqtt.connect("wss://broker.emqx.io:8084");
-const mqttScript = document.createElement("script");
-mqttScript.src = "https://unpkg.com/mqtt/dist/mqtt.min.js";
-mqttScript.onload = () => {
-    const mqttClient = mqtt.connect("wss://broker.emqx.io:8084");
-
-    mqttClient.on("connect", () => {
-        console.log("✅ Connected to EMQX via WebSocket");
-        mqttClient.subscribe("smart/factory", (err) => {
-            if (!err) {
-                console.log("📡 Subscribed to topic: smart/factory");
-            }
-        });
-    });
-
-    mqttClient.on("message", (topic, message) => {
-        try {
-            const payload = JSON.parse(message.toString());
-            const sensorId = payload.sensor.toLowerCase();
-            const newValue = parseFloat(payload.value);
-
-            if (charts[sensorId]) {
-                animateGauge(sensorId, newValue);
-            } else {
-                console.warn(`⚠️ Unknown sensor ID from MQTT: ${sensorId}`);
-            }
-        } catch (err) {
-            console.error("❌ MQTT message parse error:", err);
-        }
-    });
-};
-document.head.appendChild(mqttScript);
