@@ -10,16 +10,41 @@ const sensorDefinitions = [
   { label: "Pressure Sensor", unit: "Pa", min: 950, max: 1050 },
   { label: "RPM Sensor", unit: "RPM", min: 0, max: 5000 },
   { label: "Water Flow Sensor", unit: "L/min", min: 0, max: 100 },
-  { label: "Light Intensity Sensor", unit: "Units", min: 0, max: 100 } // New sensor added here
+  { label: "xyz Sensor", unit: "Units", min: 0, max: 100 }
 ];
 
-// Function to get the color for each sensor based on its index
-function getColor(index) {
-  const colors = ["#FF5733", "#FFA500", "#17A2B8", "#8E44AD", "#E67E22", "#27AE60", "#3498DB", "#FF6347"];
-  return colors[index % colors.length];
-}
+// Unique ON/OFF messages for each toggle (in order)
+const toggleMessages = [
+  ["hello", "bye"],
+  ["open", "close"],
+  ["start", "stop"],
+  ["enable", "disable"],
+  ["activate", "deactivate"],
+  ["poweron", "poweroff"],
+  ["run", "halt"],
+  ["up", "down"]
+];
 
-// Create gauges for each sensor
+// Setup MQTT client
+const client = mqtt.connect("wss://broker.emqx.io:8084/mqtt");
+
+client.on("connect", function () {
+  console.log("📡 Connected to MQTT broker");
+
+  client.subscribe("Sensors_Data", function (err) {
+    if (!err) {
+      console.log("✅ Subscribed to Sensors_Data");
+    }
+  });
+
+  client.subscribe("Relay_control", function (err) {
+    if (!err) {
+      console.log("✅ Subscribed to Relay_control");
+    }
+  });
+});
+
+// Create gauges and toggles
 sensorDefinitions.forEach((sensorDef, index) => {
   const sensorId = sensorDef.label.replace(/\s+/g, "").toLowerCase();
   const sensor = {
@@ -31,11 +56,15 @@ sensorDefinitions.forEach((sensorDef, index) => {
     color: getColor(index)
   };
   sensors.push(sensor);
-  createGauge(sensor);
+  createGauge(sensor, index);
 });
 
-// Create a gauge and its corresponding toggle
-function createGauge(sensor) {
+function getColor(index) {
+  const colors = ["#FF5733", "#FFA500", "#17A2B8", "#8E44AD", "#E67E22", "#27AE60", "#3498DB", "#FF6347"];
+  return colors[index % colors.length];
+}
+
+function createGauge(sensor, index) {
   const container = document.createElement("div");
   container.classList.add("gauge-container");
   container.innerHTML = `
@@ -44,70 +73,75 @@ function createGauge(sensor) {
   `;
   dashboard.appendChild(container);
 
-  // Add toggle panel
+  // Toggle setup
   const togglePanel = document.getElementById("toggle-panel");
   const toggleContainer = document.createElement("div");
   toggleContainer.classList.add("toggle-item");
   toggleContainer.innerHTML = `
-    <label class="toggle-label">Relay ${togglePanel.children.length + 1}</label>
+    <label class="toggle-label">Relay ${index + 1}</label>
     <label class="switch">
-      <input type="checkbox" id="${sensor.id}-toggle" checked>
+      <input type="checkbox" id="${sensor.id}-toggle">
       <span class="slider round"></span>
     </label>
   `;
   togglePanel.appendChild(toggleContainer);
 
-  // Store the sensor data for later use
+  // Attach toggle logic
+  const toggle = document.getElementById(`${sensor.id}-toggle`);
+  toggle.addEventListener("change", () => {
+    const message = toggle.checked ? toggleMessages[index][0] : toggleMessages[index][1];
+    client.publish("Relay_control", message);
+    console.log(`🟢 Toggle ${index + 1} sent:`, message);
+  });
+
   charts[sensor.id] = {
     valueId: `${sensor.id}-value`,
+    toggleId: `${sensor.id}-toggle`,
     unit: sensor.unit,
     currentValue: 0
   };
 }
 
-// MQTT Setup
-const client = mqtt.connect("wss://broker.emqx.io:8084/mqtt");
-
-client.on("connect", function () {
-  console.log("📡 Connected to MQTT broker");
-  client.subscribe("Sensors_Data", function (err) {
-    if (!err) {
-      console.log("✅ Subscribed to Sensors_Data");
-    } else {
-      console.error("❌ Failed to subscribe:", err);
-    }
-  });
-});
-
+// Update sensor data
 client.on("message", function (topic, message) {
-  if (topic === "Sensors_Data") {
-    // Split the incoming message by commas
-    const data = message.toString().split(',');
+  const msg = message.toString().trim().toLowerCase();
 
-    // Iterate over each sensor message
+  if (topic === "Sensors_Data") {
+    const data = msg.split(',');
     data.forEach(sensorMessage => {
-      // Extract sensor name and value from the message
       const match = sensorMessage.match(/([a-zA-Z\s]+):\s*(-?[\d\.]+)/);
       if (match) {
         const sensorName = match[1].trim().toLowerCase();
         const sensorValue = parseFloat(match[2]);
-
-        // Find the corresponding sensor by its name
         const sensor = sensors.find(s => s.label.toLowerCase().includes(sensorName));
-
         if (sensor && !isNaN(sensorValue)) {
-          // Update the sensor value in the chart object
           charts[sensor.id].currentValue = sensorValue;
           const valueElement = document.getElementById(`${sensor.id}-value`);
           if (valueElement) {
             valueElement.innerText = `${Math.round(sensorValue)} ${sensor.unit}`;
           }
-        } else {
-          console.warn(`⚠️ Invalid sensor data or no matching sensor found for: ${sensorName}`);
         }
       }
     });
+    console.log("✅ Sensor values updated.");
+  }
 
-    console.log("✅ MQTT sensor values updated:", data);
+  if (topic === "Relay_control") {
+    // Match the incoming message to a toggle state
+    toggleMessages.forEach(([onMsg, offMsg], idx) => {
+      const toggleId = charts[sensors[idx].id].toggleId;
+      const toggle = document.getElementById(toggleId);
+      if (msg === onMsg.toLowerCase()) {
+        if (!toggle.checked) {
+          toggle.checked = true;
+          toggle.dispatchEvent(new Event("change"));
+        }
+      } else if (msg === offMsg.toLowerCase()) {
+        if (toggle.checked) {
+          toggle.checked = false;
+          toggle.dispatchEvent(new Event("change"));
+        }
+      }
+    });
   }
 });
