@@ -10,7 +10,7 @@ const sensorDefinitions = [
   { label: "Pressure Sensor", unit: "Pa", min: 950, max: 1050 },
   { label: "RPM Sensor", unit: "RPM", min: 0, max: 5000 },
   { label: "Water Flow Sensor", unit: "L/min", min: 0, max: 100 },
-  { label: "xyz Sensor", unit: "Units", min: 0, max: 100 } // New sensor added here
+  { label: "Light Intensity Sensor", unit: "Units", min: 0, max: 100 } // New sensor added here
 ];
 
 // Function to get the color for each sensor based on its index
