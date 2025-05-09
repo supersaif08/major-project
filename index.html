@@ -1,72 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Sensor Gauge Dashboard</title>
-    <script>
-        // Redirect to login page if not logged in
-        if (localStorage.getItem("loggedIn") !== "true") {
-            window.location.href = "login.html";
-        }
-    </script>
-    
-    <script>
-        if (localStorage.getItem("loggedIn") !== "true") {
-            window.location.href = "login.html"; // Redirect if not logged in
-        }
-    </script>
-    
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Multi-Sensor Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    if (localStorage.getItem("loggedIn") !== "true") {
+      window.location.href = "login.html";
+    }
+  </script>
+  <style>
+    .logout-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 80px;
+      padding: 5px 5px;
+      font-size: 16px;
+      background-color: #0056b3;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      z-index: 1000;
+    }
 
-    <style>
-        .logout-btn {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 80px;
-    padding: 5px 5px;
-    font-size: 16px;
-    background-color: #0056b3;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    z-index: 1000;
-}
-
-.logout-btn:hover {
-    background-color: #004299;
-}
-
-    </style>
+    .logout-btn:hover {
+      background-color: #004299;
+    }
+  </style>
 </head>
 <body>
-    <button onclick="logout()" class="logout-btn">Logout</button>
+  <button onclick="logout()" class="logout-btn">Logout</button>
 
-    <div class="container">
-        <div class="project-title">
-            <h1>Smart Industrial Monitoring and Control System</h1>
-        </div>
-
-        <div class="main-layout">
-            <div class="dashboard" id="dashboard">
-                <!-- Gauge boxes will be added dynamically here -->
-            </div>
-
-            <div class="toggle-panel" id="toggle-panel">
-                <!-- Toggle switches will be added here dynamically -->
-            </div>
-        </div>
+  <div class="container">
+    <div class="project-title">
+      <h1>Smart Industrial Monitoring and Control System</h1>
     </div>
 
-    <script>
-        function logout() {
-            localStorage.removeItem("loggedIn");
-            window.location.href = "login.html";
-        }
-    </script>
-    <script src="script.js"></script>
-</body>
+    <div class="main-layout">
+      <div class="dashboard" id="dashboard">
+        <!-- Sensor boxes will be added dynamically here -->
+      </div>
 
+      <div class="toggle-panel" id="toggle-panel">
+        <!-- Toggle switches will be added here dynamically -->
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    function logout() {
+      localStorage.removeItem("loggedIn");
+      window.location.href = "login.html";
+    }
+  </script>
+  <!-- this is for mqtt -->
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script> <!-- Move this above your script.js -->
+  <script src="mqtt_integrated.js"></script>
+  <!-- this is for google sheet -->
+  <!-- <script src="script.js"></script> -->
+  
+
+
+</body>
 </html>

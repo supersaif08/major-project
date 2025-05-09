@@ -78,10 +78,19 @@ body {
 
 /* 🔹 Gauge Value */
 .gauge-value {
-    font-size: 18px;
+    font-size: 24px;        /* Bigger font */
     font-weight: bold;
-    margin-top: 5px;
+    color: var(--secondary-color);
+    /* this margin is for the google sheet */
+    /* margin-top: -5px; */
+    /* this margin is for the mqtt */
+    margin-top: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;           /* Fixed height to center properly */
 }
+
 
 /* 🔹 Fix Canvas Size */
 canvas {
