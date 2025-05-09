@@ -32,15 +32,11 @@ client.on("connect", function () {
   console.log("📡 Connected to MQTT broker");
 
   client.subscribe("Sensors_Data", function (err) {
-    if (!err) {
-      console.log("✅ Subscribed to Sensors_Data");
-    }
+    if (!err) console.log("✅ Subscribed to Sensors_Data");
   });
 
   client.subscribe("Relay_control", function (err) {
-    if (!err) {
-      console.log("✅ Subscribed to Relay_control");
-    }
+    if (!err) console.log("✅ Subscribed to Relay_control");
   });
 });
 
@@ -67,7 +63,7 @@ function getColor(index) {
 function createGauge(sensor, index) {
   const container = document.createElement("div");
   container.classList.add("gauge-container");
-  container.innerHTML = `
+  container.innerHTML = `  
     <div class="gauge-title">${sensor.label}</div>
     <div class="gauge-value" id="${sensor.id}-value">0 ${sensor.unit}</div>
   `;
@@ -90,8 +86,9 @@ function createGauge(sensor, index) {
   const toggle = document.getElementById(`${sensor.id}-toggle`);
   toggle.addEventListener("change", () => {
     const message = toggle.checked ? toggleMessages[index][0] : toggleMessages[index][1];
-    client.publish("Relay_control", message);
-    console.log(`🟢 Toggle ${index + 1} sent:`, message);
+    const publishMessage = `relay${index + 1}=${message}`;
+    client.publish("Relay_control", publishMessage);
+    console.log(`🟢 Published: ${publishMessage}`);
   });
 
   charts[sensor.id] = {
@@ -104,7 +101,7 @@ function createGauge(sensor, index) {
 
 // Update sensor data
 client.on("message", function (topic, message) {
-  const msg = message.toString().trim().toLowerCase();
+  const msg = message.toString();
 
   if (topic === "Sensors_Data") {
     const data = msg.split(',');
@@ -127,19 +124,29 @@ client.on("message", function (topic, message) {
   }
 
   if (topic === "Relay_control") {
-    // Match the incoming message to a toggle state
-    toggleMessages.forEach(([onMsg, offMsg], idx) => {
-      const toggleId = charts[sensors[idx].id].toggleId;
-      const toggle = document.getElementById(toggleId);
-      if (msg === onMsg.toLowerCase()) {
-        if (!toggle.checked) {
-          toggle.checked = true;
-          toggle.dispatchEvent(new Event("change"));
-        }
-      } else if (msg === offMsg.toLowerCase()) {
-        if (toggle.checked) {
-          toggle.checked = false;
-          toggle.dispatchEvent(new Event("change"));
+    const lines = msg.split('\n');
+    lines.forEach(line => {
+      const match = line.trim().match(/^relay(\d)=(.+)$/i);
+      if (match) {
+        const relayNum = parseInt(match[1]);
+        const action = match[2].toLowerCase();
+
+        if (relayNum >= 1 && relayNum <= sensors.length) {
+          const index = relayNum - 1;
+          const [onMsg, offMsg] = toggleMessages[index];
+          const sensorId = sensors[index].id;
+          const toggleId = charts[sensorId].toggleId;
+          const toggle = document.getElementById(toggleId);
+
+          if (toggle) {
+            if (action === onMsg.toLowerCase() && !toggle.checked) {
+              toggle.checked = true;
+              toggle.dispatchEvent(new Event("change"));
+            } else if (action === offMsg.toLowerCase() && toggle.checked) {
+              toggle.checked = false;
+              toggle.dispatchEvent(new Event("change"));
+            }
+          }
         }
       }
     });
