@@ -70,9 +70,9 @@ const client = mqtt.connect("wss://broker.emqx.io:8084/mqtt");
 
 client.on("connect", function () {
   console.log("📡 Connected to MQTT broker");
-  client.subscribe("topic12", function (err) {
+  client.subscribe("Sensors_Data", function (err) {
     if (!err) {
-      console.log("✅ Subscribed to topic12");
+      console.log("✅ Subscribed to Sensors_Data");
     } else {
       console.error("❌ Failed to subscribe:", err);
     }
@@ -80,7 +80,7 @@ client.on("connect", function () {
 });
 
 client.on("message", function (topic, message) {
-  if (topic === "topic12") {
+  if (topic === "Sensors_Data") {
     // Split the incoming message by commas
     const data = message.toString().split(',');
 
