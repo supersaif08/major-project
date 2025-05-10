@@ -11,7 +11,7 @@ const sensorDefinitions = [
   { label: "Pressure Sensor", unit: "Pa", min: 950, max: 1050 },
   { label: "RPM Sensor", unit: "RPM", min: 0, max: 5000 },
   { label: "Water Flow Sensor", unit: "L/min", min: 0, max: 100 },
-  { label: "xyz Sensor", unit: "Units", min: 0, max: 100 }
+  { label: "Light Intensity Sensor", unit: "Units", min: 0, max: 100 }
 ];
 
 // ON/OFF messages for each relay
@@ -83,7 +83,8 @@ function createGauge(sensor, index) {
     const relayIndex = index;
     const nextState = !relayStates[relayIndex]; // what user wants
     const message = nextState ? toggleMessages[relayIndex][0] : toggleMessages[relayIndex][1];
-    client.publish("Relay_control", `relay${relayIndex + 1}=${message}`);
+    client.publish("Relay_control", message);
+
     console.log(`🟡 Sent: relay${relayIndex + 1}=${message}`);
   });
 
@@ -100,41 +101,46 @@ client.on("message", function (topic, message) {
 
   if (topic === "Sensors_Data") {
     const data = msg.split(',');
-    data.forEach(sensorMessage => {
-      const match = sensorMessage.match(/([a-zA-Z\s]+):\s*(-?[\d\.]+)/);
-      if (match) {
-        const sensorName = match[1].trim().toLowerCase();
-        const sensorValue = parseFloat(match[2]);
-        const sensor = sensors.find(s => s.label.toLowerCase().includes(sensorName));
-        if (sensor && !isNaN(sensorValue)) {
-          charts[sensor.id].currentValue = sensorValue;
-          const valueElement = document.getElementById(`${sensor.id}-value`);
-          if (valueElement) valueElement.innerText = `${Math.round(sensorValue)} ${sensor.unit}`;
-        }
-      }
-    });
+data.forEach(sensorMessage => {
+  const match = sensorMessage.trim().match(/^([A-Z_]+)_(-?[\d\.]+)$/);
+  if (match) {
+    const sensorKey = match[1]; // e.g., CURRENT_SENSOR
+    const sensorValue = parseFloat(match[2]);
+
+    // Match sensor label against uppercase, underscore-separated label
+    const sensor = sensors.find(s => s.label.replace(/\s+/g, "_").toUpperCase() === sensorKey);
+
+    if (sensor && !isNaN(sensorValue)) {
+      charts[sensor.id].currentValue = sensorValue;
+      const valueElement = document.getElementById(`${sensor.id}-value`);
+      if (valueElement) valueElement.innerText = `${Math.round(sensorValue)} ${sensor.unit}`;
+    }
+  }
+});
+
     console.log("✅ Sensor values updated.");
   }
 
-  if (topic === "Relay_control") {
-    const lines = msg.split('\n');
-    lines.forEach(line => {
-      const match = line.trim().match(/^relay(\d+)=(Relay_\d+_C(ON|OFF))$/i);
-      if (match) {
-        const relayNum = parseInt(match[1]);
-        const stateConfirmed = match[3].toUpperCase(); // ON or OFF
-        if (relayNum >= 1 && relayNum <= sensors.length) {
-          const index = relayNum - 1;
-          const sensorId = sensors[index].id;
-          const toggle = document.getElementById(charts[sensorId].toggleId);
-          const isOn = stateConfirmed === "ON";
+if (topic === "Relay_control") {
+  const lines = msg.split('\n');
+  lines.forEach(line => {
+    const match = line.trim().match(/^Relay_(\d+)_C(ON|OFF)$/i);
+    if (match) {
+      const relayNum = parseInt(match[1]);
+      const stateConfirmed = match[2].toUpperCase(); // ON or OFF
+      if (relayNum >= 1 && relayNum <= sensors.length) {
+        const index = relayNum - 1;
+        const sensorId = sensors[index].id;
+        const toggle = document.getElementById(charts[sensorId].toggleId);
+        const isOn = stateConfirmed === "ON";
 
-          relayStates[index] = isOn;
-          toggle.checked = isOn;
+        relayStates[index] = isOn;
+        toggle.checked = isOn;
 
-          console.log(`✅ Relay ${relayNum} turned ${isOn ? 'ON' : 'OFF'} (confirmed by broker)`);
-        }
+        console.log(`✅ Relay ${relayNum} turned ${isOn ? 'ON' : 'OFF'} (confirmed by broker)`);
       }
-    });
-  }
+    }
+  });
+}
+
 });
