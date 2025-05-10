@@ -82,8 +82,9 @@ function createGauge(sensor, index) {
     e.preventDefault(); // prevent toggle change
     const relayIndex = index;
     const nextState = !relayStates[relayIndex]; // what user wants
-    const message = nextState ? toggleMessages[relayIndex][0] : toggleMessages[relayIndex][1];
+    const message = (nextState ? toggleMessages[relayIndex][0] : toggleMessages[relayIndex][1]).toUpperCase();
     client.publish("Relay_control", message);
+
 
     console.log(`🟡 Sent: relay${relayIndex + 1}=${message}`);
   });
@@ -124,7 +125,7 @@ data.forEach(sensorMessage => {
 if (topic === "Relay_control") {
   const lines = msg.split('\n');
   lines.forEach(line => {
-    const match = line.trim().match(/^Relay_(\d+)_C(ON|OFF)$/i);
+    const match = line.trim().match(/^RELAY_(\d+)_C(ON|OFF)$/);
     if (match) {
       const relayNum = parseInt(match[1]);
       const stateConfirmed = match[2].toUpperCase(); // ON or OFF
