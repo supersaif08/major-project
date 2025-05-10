@@ -2,6 +2,7 @@ const dashboard = document.getElementById("dashboard");
 const charts = {};
 const sensors = [];
 
+// Sensor definitions
 const sensorDefinitions = [
   { label: "Current Sensor", unit: "A", min: 0, max: 30 },
   { label: "Temperature Sensor", unit: "°C", min: 10, max: 100 },
@@ -13,31 +14,25 @@ const sensorDefinitions = [
   { label: "xyz Sensor", unit: "Units", min: 0, max: 100 }
 ];
 
-// Unique ON/OFF messages for each toggle (in order)
+// ON/OFF messages for each relay
 const toggleMessages = [
-  ["hello", "bye"],
-  ["open", "close"],
-  ["start", "stop"],
-  ["enable", "disable"],
-  ["activate", "deactivate"],
-  ["poweron", "poweroff"],
-  ["run", "halt"],
-  ["up", "down"]
+  ["Relay_1_TON", "Relay_1_TOFF"],
+  ["Relay_2_TON", "Relay_2_TOFF"],
+  ["Relay_3_TON", "Relay_3_TOFF"],
+  ["Relay_4_TON", "Relay_4_TOFF"],
+  ["Relay_5_TON", "Relay_5_TOFF"],
+  ["Relay_6_TON", "Relay_6_TOFF"],
+  ["Relay_7_TON", "Relay_7_TOFF"],
+  ["Relay_8_TON", "Relay_8_TOFF"]
 ];
 
-// Setup MQTT client
+const relayStates = Array(8).fill(false);  // false = OFF
 const client = mqtt.connect("wss://broker.emqx.io:8084/mqtt");
 
 client.on("connect", function () {
   console.log("📡 Connected to MQTT broker");
-
-  client.subscribe("Sensors_Data", function (err) {
-    if (!err) console.log("✅ Subscribed to Sensors_Data");
-  });
-
-  client.subscribe("Relay_control", function (err) {
-    if (!err) console.log("✅ Subscribed to Relay_control");
-  });
+  client.subscribe("Sensors_Data", err => !err && console.log("✅ Subscribed to Sensors_Data"));
+  client.subscribe("Relay_control", err => !err && console.log("✅ Subscribed to Relay_control"));
 });
 
 // Create gauges and toggles
@@ -69,7 +64,6 @@ function createGauge(sensor, index) {
   `;
   dashboard.appendChild(container);
 
-  // Toggle setup
   const togglePanel = document.getElementById("toggle-panel");
   const toggleContainer = document.createElement("div");
   toggleContainer.classList.add("toggle-item");
@@ -82,13 +76,15 @@ function createGauge(sensor, index) {
   `;
   togglePanel.appendChild(toggleContainer);
 
-  // Attach toggle logic
   const toggle = document.getElementById(`${sensor.id}-toggle`);
-  toggle.addEventListener("change", () => {
-    const message = toggle.checked ? toggleMessages[index][0] : toggleMessages[index][1];
-    const publishMessage = `relay${index + 1}=${message}`;
-    client.publish("Relay_control", publishMessage);
-    console.log(`🟢 Published: ${publishMessage}`);
+
+  toggle.addEventListener("click", (e) => {
+    e.preventDefault(); // prevent toggle change
+    const relayIndex = index;
+    const nextState = !relayStates[relayIndex]; // what user wants
+    const message = nextState ? toggleMessages[relayIndex][0] : toggleMessages[relayIndex][1];
+    client.publish("Relay_control", `relay${relayIndex + 1}=${message}`);
+    console.log(`🟡 Sent: relay${relayIndex + 1}=${message}`);
   });
 
   charts[sensor.id] = {
@@ -99,7 +95,6 @@ function createGauge(sensor, index) {
   };
 }
 
-// Update sensor data
 client.on("message", function (topic, message) {
   const msg = message.toString();
 
@@ -114,9 +109,7 @@ client.on("message", function (topic, message) {
         if (sensor && !isNaN(sensorValue)) {
           charts[sensor.id].currentValue = sensorValue;
           const valueElement = document.getElementById(`${sensor.id}-value`);
-          if (valueElement) {
-            valueElement.innerText = `${Math.round(sensorValue)} ${sensor.unit}`;
-          }
+          if (valueElement) valueElement.innerText = `${Math.round(sensorValue)} ${sensor.unit}`;
         }
       }
     });
@@ -126,27 +119,20 @@ client.on("message", function (topic, message) {
   if (topic === "Relay_control") {
     const lines = msg.split('\n');
     lines.forEach(line => {
-      const match = line.trim().match(/^relay(\d)=(.+)$/i);
+      const match = line.trim().match(/^relay(\d+)=(Relay_\d+_C(ON|OFF))$/i);
       if (match) {
         const relayNum = parseInt(match[1]);
-        const action = match[2].toLowerCase();
-
+        const stateConfirmed = match[3].toUpperCase(); // ON or OFF
         if (relayNum >= 1 && relayNum <= sensors.length) {
           const index = relayNum - 1;
-          const [onMsg, offMsg] = toggleMessages[index];
           const sensorId = sensors[index].id;
-          const toggleId = charts[sensorId].toggleId;
-          const toggle = document.getElementById(toggleId);
+          const toggle = document.getElementById(charts[sensorId].toggleId);
+          const isOn = stateConfirmed === "ON";
 
-          if (toggle) {
-            if (action === onMsg.toLowerCase() && !toggle.checked) {
-              toggle.checked = true;
-              toggle.dispatchEvent(new Event("change"));
-            } else if (action === offMsg.toLowerCase() && toggle.checked) {
-              toggle.checked = false;
-              toggle.dispatchEvent(new Event("change"));
-            }
-          }
+          relayStates[index] = isOn;
+          toggle.checked = isOn;
+
+          console.log(`✅ Relay ${relayNum} turned ${isOn ? 'ON' : 'OFF'} (confirmed by broker)`);
         }
       }
     });
