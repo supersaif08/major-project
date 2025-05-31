@@ -27,7 +27,7 @@ function createGauge(sensor) {
     const toggleContainer = document.createElement("div");
     toggleContainer.classList.add("toggle-item");
     toggleContainer.innerHTML = `
-        <label class="toggle-label">RELAY ${togglePanel.children.length + 1}</label>
+        <label class="toggle-label">Relay ${togglePanel.children.length + 1}</label>
 
         <label class="switch">
             <input type="checkbox" id="${sensor.id}-toggle" checked>
