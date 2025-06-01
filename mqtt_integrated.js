@@ -29,8 +29,7 @@ const client = mqtt.connect("wss://broker.emqx.io:8084/mqtt");
 
 client.on("connect", function () {
   console.log("📡 Connected to MQTT broker");
-  client.subscribe("Sensors_Data", err => !err && console.log("✅ Subscribed to Sensors_Data"));
-  client.subscribe("Sensors_Data", err => !err && console.log("✅ Subscribed to Sensors_Data"));
+  client.subscribe("sensor_relay", err => !err && console.log("✅ Subscribed to sensor_relay"));
 });
 
 sensorDefinitions.forEach((sensorDef, index) => {
@@ -69,7 +68,7 @@ sensorDefinitions.forEach((sensorDef, index) => {
     const relayIndex = index;
     const nextState = !relayStates[relayIndex];
     const message = (nextState ? toggleMessages[relayIndex][0] : toggleMessages[relayIndex][1]).toUpperCase();
-    client.publish("Sensors_Data", message);
+    client.publish("sensor_relay", message);
     console.log(`🟡 Sent: relay${relayIndex + 1}=${message}`);
   });
 
@@ -99,13 +98,21 @@ function createGauge(sensor, index) {
 client.on("message", function (topic, message) {
   const msg = message.toString();
 
-  if (topic === "Sensors_Data") {
+  if (topic === "sensor_relay") {
     const data = msg.split(',');
-    data.forEach(sensorMessage => {
-      const match = sensorMessage.trim().match(/^([A-Z_]+)_(-?[\d\.]+)$/);
-      if (match) {
-        const sensorKey = match[1];
-        const sensorValue = parseFloat(match[2]);
+
+    data.forEach(item => {
+      const trimmed = item.trim();
+
+      // Match sensor values like: CURRENT_SENSOR_12.5
+      const sensorMatch = trimmed.match(/^([A-Z_]+)_(-?[\d\.]+)$/);
+
+      // Match relay commands like: RELAY_2_CON or RELAY_4_COFF
+      const relayMatch = trimmed.match(/^RELAY_(\d+)_C(ON|OFF)$/);
+
+      if (sensorMatch) {
+        const sensorKey = sensorMatch[1];
+        const sensorValue = parseFloat(sensorMatch[2]);
 
         const sensor = sensors.find(s => s.label.replace(/\s+/g, "_").toUpperCase() === sensorKey);
         if (sensor && !isNaN(sensorValue)) {
@@ -117,18 +124,11 @@ client.on("message", function (topic, message) {
           }
         }
       }
-    });
 
-    console.log("✅ Sensor values updated.");
-  }
+      if (relayMatch) {
+        const relayNum = parseInt(relayMatch[1]);
+        const stateConfirmed = relayMatch[2].toUpperCase();
 
-  if (topic === "Sensors_Data") {
-    const lines = msg.split('\n');
-    lines.forEach(line => {
-      const match = line.trim().match(/^RELAY_(\d+)_C(ON|OFF)$/);
-      if (match) {
-        const relayNum = parseInt(match[1]);
-        const stateConfirmed = match[2].toUpperCase();
         if (relayNum >= 1 && relayNum <= sensors.length) {
           const index = relayNum - 1;
           const sensorId = sensors[index].id;
@@ -136,10 +136,13 @@ client.on("message", function (topic, message) {
           const isOn = stateConfirmed === "ON";
 
           relayStates[index] = isOn;
-          toggle.checked = isOn;
+          if (toggle) toggle.checked = isOn;
+
           console.log(`✅ Relay ${relayNum} turned ${isOn ? 'ON' : 'OFF'} (confirmed by broker)`);
         }
       }
     });
+
+    console.log("✅ Multiple sensor and relay states updated.");
   }
 });
