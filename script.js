@@ -124,9 +124,9 @@ function getColor(index) {
     return colors[index % colors.length];
 }
 
-// **🔹 Assign Units Based on Sensor Name**
+// **🔹 Assign Lux Based on Sensor Name**
 function getUnit(sensorName) {
-    const units = {
+    const Lux = {
         "Current Sensor": "A",
         "Temperature Sensor": "°C",
         "Humidity Sensor": "%",
@@ -135,7 +135,7 @@ function getUnit(sensorName) {
         "RPM Sensor": "RPM",
         "Water Flow Sensor": "L/min"
     };
-    return units[sensorName] || "";
+    return Lux[sensorName] || "";
 }
 
 // **🔹 Smooth Animation Function**
